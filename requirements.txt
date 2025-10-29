@@ -1,0 +1,17 @@
+# Core dependencies
+numpy>=1.21.0
+scipy>=1.7.0
+
+# Wikipedia extraction
+wikiextractor>=3.0.6
+
+# Text processing
+regex>=2021.8.3
+
+# Progress bars
+tqdm>=4.62.0
+
+# Optional: for better performance
+scikit-learn>=1.0.0
+
+# Note: FastText and VecMap are installed separately (see setup instructions)

@@ -1,0 +1,32 @@
+# Python
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.pytest_cache/
+
+# Data files (too large for git)
+data/raw/*.xml.bz2
+data/raw/*.xml
+data/processed/*.txt
+models/*.vec
+models/*.bin
+
+# External tools
+fastText/
+vecmap/
+
+# Results
+results/*.txt
+results/*.json
+
+# Keep directory structure
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+!data/dictionaries/.gitkeep
+!models/.gitkeep
+!results/.gitkeep
+
+# Logs
+*.log
