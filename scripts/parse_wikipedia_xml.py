@@ -244,6 +244,9 @@ def clean_wikitext(text: str, collect_questions: bool = False) -> str:
     # Replace math tags with "formula"
     text = re.sub(r'<math[^>]*>.*?</math>', 'formula', text, flags=re.DOTALL | re.IGNORECASE)
     
+    # Remove source code blocks completely
+    text = re.sub(r'<source[^>]*>.*?</source>', '', text, flags=re.DOTALL | re.IGNORECASE)
+    
     # Remove HTML tags
     text = HTML_TAG_RE.sub('', text)
     
