@@ -288,6 +288,10 @@ def split_into_sentences(text: str) -> List[str]:
         if len(line) < 10:
             continue
         
+        # Skip horizontal rules (---- or more)
+        if re.match(r'^-{4,}$', line):
+            continue
+        
         # Skip lines starting with asterisk (bullet points that survived)
         if line.startswith('*'):
             continue
@@ -298,8 +302,8 @@ def split_into_sentences(text: str) -> List[str]:
         # Remove incomplete parenthetical markers at end: (n, (m, (f, (d
         line = re.sub(r'\s*\([nmfd]\s*$', '', line)
         
-        # Skip lines with image/file references
-        if any(marker in line.lower() for marker in ['thumb|', 'arkivo:', 'file:', '|thumb', '|right', '|left']):
+        # Skip lines with image/file references or captions
+        if any(marker in line.lower() for marker in ['thumb|', 'arkivo:', 'file:', '|thumb', '|right', '|left', ', da ', '|center']):
             continue
         
         # Skip lines starting with pipe (table remnants)
@@ -320,12 +324,52 @@ def split_into_sentences(text: str) -> List[str]:
         if len(line) < 10:
             continue
         
-        # Split on periods, but keep sentences together
-        parts = line.split('. ')
-        for part in parts:
-            part = part.strip()
+        # Smart sentence splitting that respects parentheses and abbreviations
+        # Don't split on periods inside parentheses or after abbreviations like "n."
+        parts = []
+        current = []
+        paren_depth = 0
+        i = 0
+        
+        while i < len(line):
+            char = line[i]
+            current.append(char)
+            
+            if char == '(':
+                paren_depth += 1
+            elif char == ')':
+                paren_depth -= 1
+            elif char == '.' and paren_depth == 0:
+                # Check if this is an abbreviation (n., m., etc.)
+                if i > 0 and i < len(line) - 1:
+                    # Look back for single letter + period
+                    if i >= 1 and line[i-1] in 'nmfdNMFD' and (i == 1 or not line[i-2].isalpha()):
+                        # This is an abbreviation, don't split
+                        i += 1
+                        continue
+                    # Check if followed by space and capital letter (real sentence end)
+                    if i < len(line) - 2 and line[i+1] == ' ' and line[i+2].isupper():
+                        # Real sentence boundary
+                        part = ''.join(current).strip()
+                        if len(part) >= 10:
+                            parts.append(part)
+                        current = []
+                        i += 1
+                        continue
+            
+            i += 1
+        
+        # Add remaining text
+        if current:
+            part = ''.join(current).strip()
             if len(part) >= 10:
-                sentences.append(part)
+                parts.append(part)
+        
+        # If no smart splitting happened, fall back to simple split
+        if not parts:
+            parts = [p.strip() for p in line.split('. ') if len(p.strip()) >= 10]
+        
+        sentences.extend(parts)
     
     return sentences
 
