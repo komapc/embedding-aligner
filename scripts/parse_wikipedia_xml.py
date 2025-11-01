@@ -241,6 +241,9 @@ def clean_wikitext(text: str, collect_questions: bool = False) -> str:
     # Remove any remaining brackets (shouldn't be any, but just in case)
     text = text.replace('[[', '').replace(']]', '')
     
+    # Replace math tags with "formula"
+    text = re.sub(r'<math[^>]*>.*?</math>', 'formula', text, flags=re.DOTALL | re.IGNORECASE)
+    
     # Remove HTML tags
     text = HTML_TAG_RE.sub('', text)
     
@@ -319,6 +322,10 @@ def split_into_sentences(text: str) -> List[str]:
         
         # Remove excessive whitespace
         line = ' '.join(line.split())
+        
+        # Skip lines that are just "formula" (from math tags)
+        if line.strip().lower() == 'formula':
+            continue
         
         # Final length check after cleaning
         if len(line) < 10:
