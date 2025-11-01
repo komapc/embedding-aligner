@@ -234,6 +234,9 @@ def clean_wikitext(text: str, collect_questions: bool = False) -> str:
             break
     
     # Handle wiki links: keep display text
+    # First remove links with URLs: [[http://example.com text]] -> text
+    text = re.sub(r'\[\[https?://[^\]]+\s+([^\]]+)\]\]', r'\1', text)
+    # Then handle normal wiki links: [[target|display]] -> display
     text = LINK_WITH_PIPE_RE.sub(r'\1', text)
     
     # Remove HTML tags
@@ -281,6 +284,10 @@ def split_into_sentences(text: str) -> List[str]:
         
         # Skip very short lines
         if len(line) < 10:
+            continue
+        
+        # Skip lines starting with asterisk (bullet points that survived)
+        if line.startswith('*'):
             continue
         
         # Remove numbered list prefixes (1918), 1650), etc.) - these appear after bullet removal
