@@ -236,8 +236,10 @@ def clean_wikitext(text: str, collect_questions: bool = False) -> str:
     # Handle wiki links: keep display text
     # First remove links with URLs: [[http://example.com text]] -> text
     text = re.sub(r'\[\[https?://[^\]]+\s+([^\]]+)\]\]', r'\1', text)
-    # Then handle normal wiki links: [[target|display]] -> display
+    # Then handle normal wiki links: [[target|display]] -> display, [[target]] -> target
     text = LINK_WITH_PIPE_RE.sub(r'\1', text)
+    # Remove any remaining brackets (shouldn't be any, but just in case)
+    text = text.replace('[[', '').replace(']]', '')
     
     # Remove HTML tags
     text = HTML_TAG_RE.sub('', text)
