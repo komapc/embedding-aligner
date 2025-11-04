@@ -32,8 +32,8 @@ def load_dictionary(dict_path: Path) -> Dict:
     Returns:
         Dictionary data
     """
-    # TODO: Implement dictionary loading
-    pass
+    with open(dict_path, 'r', encoding='utf-8') as f:
+        return json.load(f)
 
 
 def extract_word_pairs(dictionary: Dict) -> List[Tuple[str, str]]:
@@ -46,12 +46,30 @@ def extract_word_pairs(dictionary: Dict) -> List[Tuple[str, str]]:
     Returns:
         List of (ido, esperanto) tuples
     """
-    # TODO: Implement pair extraction
-    # - Parse dictionary structure
-    # - Extract lemma forms
-    # - Handle multiple translations
-    # - Remove multi-word expressions (optional)
-    pass
+    pairs = []
+    
+    for ido_word, entry in dictionary.items():
+        # Skip metadata
+        if ido_word == 'metadata':
+            continue
+        
+        # Skip if no esperanto translations
+        if 'esperanto_words' not in entry or not entry['esperanto_words']:
+            continue
+        
+        # Extract esperanto translations
+        for epo_word in entry['esperanto_words']:
+            # Skip multi-word expressions
+            if ' ' in ido_word or ' ' in epo_word:
+                continue
+            
+            # Skip empty or very short words
+            if len(ido_word) < 2 or len(epo_word) < 2:
+                continue
+            
+            pairs.append((ido_word.lower(), epo_word.lower()))
+    
+    return pairs
 
 
 def filter_pairs_by_vocabulary(
@@ -72,11 +90,23 @@ def filter_pairs_by_vocabulary(
     Returns:
         Filtered list of pairs
     """
-    # TODO: Implement vocabulary filtering
-    # - Check if word exists in vocabulary
-    # - Check word frequency
-    # - Remove low-frequency pairs
-    pass
+    filtered = []
+    
+    for ido_word, epo_word in pairs:
+        # Check if both words are in vocabularies
+        if ido_word not in ido_model.wv or epo_word not in epo_model.wv:
+            continue
+        
+        # Check frequency (word count in training)
+        ido_count = ido_model.wv.get_vecattr(ido_word, 'count')
+        epo_count = epo_model.wv.get_vecattr(epo_word, 'count')
+        
+        if ido_count < min_freq or epo_count < min_freq:
+            continue
+        
+        filtered.append((ido_word, epo_word))
+    
+    return filtered
 
 
 def save_seed_dictionary(pairs: List[Tuple[str, str]], output_path: Path):
@@ -87,10 +117,9 @@ def save_seed_dictionary(pairs: List[Tuple[str, str]], output_path: Path):
         pairs: List of (ido, esperanto) tuples
         output_path: Path to save dictionary
     """
-    # TODO: Implement saving
-    # - Write one pair per line
-    # - Format: "ido_word esperanto_word"
-    pass
+    with open(output_path, 'w', encoding='utf-8') as f:
+        for ido_word, epo_word in pairs:
+            f.write(f"{ido_word} {epo_word}\n")
 
 
 def compute_statistics(
@@ -107,13 +136,15 @@ def compute_statistics(
     Returns:
         Statistics dictionary
     """
-    # TODO: Implement statistics
+    unique_ido = len(set(pair[0] for pair in filtered_pairs))
+    unique_epo = len(set(pair[1] for pair in filtered_pairs))
+    
     stats = {
         'original_pairs': len(original_pairs),
         'filtered_pairs': len(filtered_pairs),
-        'coverage': 0.0,
-        'unique_ido_words': 0,
-        'unique_epo_words': 0
+        'coverage': len(filtered_pairs) / len(original_pairs) if original_pairs else 0.0,
+        'unique_ido_words': unique_ido,
+        'unique_epo_words': unique_epo
     }
     return stats
 
