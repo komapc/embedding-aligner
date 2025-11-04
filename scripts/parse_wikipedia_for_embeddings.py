@@ -22,8 +22,9 @@ import argparse
 # Remove category links
 CATEGORY_RE = re.compile(r'\[\[(?:Category|Kategorio|Kategorii):[^\]]+\]\]', re.IGNORECASE)
 
-# Remove file/image links
-FILE_RE = re.compile(r'\[\[(?:File|Image|Dosiero|Imajo):[^\]]+\]\]', re.IGNORECASE)
+# Remove file/image links and captions (completely ignore all image-related content)
+# This matches [[File:...]] or [[Image:...]] with any content including nested brackets
+FILE_RE = re.compile(r'\[\[(?:File|Image|Dosiero|Imajo|Arkivo|Fichier):[^\]]*(?:\[\[[^\]]*\]\][^\]]*)*\]\]', re.IGNORECASE)
 
 # Handle wiki links: [[target|display]] -> display, [[target]] -> target
 LINK_WITH_PIPE_RE = re.compile(r'\[\[(?:[^\]|]+\|)?([^\]]+)\]\]')
@@ -72,8 +73,11 @@ def clean_wikitext(text: str, collect_questions: bool = False) -> str:
     # Remove categories
     text = CATEGORY_RE.sub('', text)
     
-    # Remove file/image links
+    # Remove file/image links and all captions (completely ignore)
     text = FILE_RE.sub('', text)
+    
+    # Also remove any remaining image-related templates
+    text = re.sub(r'\{\{(?:Image|File|Thumb|Thumbnail)[^}]*\}\}', '', text, flags=re.IGNORECASE)
     
     # Handle wiki links: keep display text
     text = LINK_WITH_PIPE_RE.sub(r'\1', text)

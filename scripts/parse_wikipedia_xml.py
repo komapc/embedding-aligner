@@ -22,7 +22,8 @@ import gzip
 
 # Pre-compile regex patterns for performance
 CATEGORY_RE = re.compile(r'\[\[(?:Category|Kategorio|Kategorii):[^\]]+\]\]', re.IGNORECASE)
-FILE_RE = re.compile(r'\[\[(?:File|Image|Dosiero|Imajo|Arkivo):[^\]]+\]\]', re.IGNORECASE)
+# Remove ALL image/file content including captions (completely ignore)
+FILE_RE = re.compile(r'\[\[(?:File|Image|Dosiero|Imajo|Arkivo|Fichier):[^\]]*(?:\[\[[^\]]*\]\][^\]]*)*\]\]', re.IGNORECASE)
 LINK_WITH_PIPE_RE = re.compile(r'\[\[(?:[^\]|]+\|)?([^\]]+)\]\]')
 COMMENT_RE = re.compile(r'<!--.*?-->', re.DOTALL)
 HTML_TAG_RE = re.compile(r'<[^>]+>')
