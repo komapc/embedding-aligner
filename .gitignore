@@ -30,3 +30,6 @@ results/*.json
 
 # Logs
 *.log
+
+# Helper scripts (not part of project)
+push_to_github.sh
