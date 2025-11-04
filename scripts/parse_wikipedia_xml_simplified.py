@@ -169,6 +169,9 @@ def split_into_sentences(text: str) -> List[str]:
         if not parts:
             parts = [p.strip() for p in line.split('. ') if len(p.strip()) >= 10]
         
+        # Clean up any trailing periods from sentences
+        parts = [p.rstrip('. ') for p in parts if p.strip()]
+        
         sentences.extend(parts)
     
     return sentences
