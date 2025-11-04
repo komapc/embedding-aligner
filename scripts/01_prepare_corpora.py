@@ -30,12 +30,19 @@ def clean_text(text: str) -> str:
     Returns:
         Cleaned text string
     """
-    # TODO: Implement text cleaning
-    # - Remove extra whitespace
-    # - Normalize punctuation
-    # - Remove URLs, emails
-    # - Keep diacritics (important for Ido/Esperanto)
-    pass
+    # Remove URLs
+    text = re.sub(r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\(\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', '', text)
+    
+    # Remove email addresses
+    text = re.sub(r'\S+@\S+', '', text)
+    
+    # Remove extra whitespace
+    text = re.sub(r'\s+', ' ', text)
+    
+    # Strip leading/trailing whitespace
+    text = text.strip()
+    
+    return text
 
 
 def tokenize_sentence(sentence: str) -> str:
@@ -48,11 +55,16 @@ def tokenize_sentence(sentence: str) -> str:
     Returns:
         Tokenized sentence
     """
-    # TODO: Implement tokenization
-    # - Split on whitespace
-    # - Handle punctuation
-    # - Lowercase (optional - preserve for morphology)
-    pass
+    # Lowercase for consistency
+    sentence = sentence.lower()
+    
+    # Add space before punctuation for better tokenization
+    sentence = re.sub(r'([.,!?;:])', r' \1 ', sentence)
+    
+    # Remove extra spaces
+    sentence = re.sub(r'\s+', ' ', sentence).strip()
+    
+    return sentence
 
 
 def process_corpus(input_path: Path, output_path: Path, min_length: int = 3) -> dict:
@@ -67,15 +79,6 @@ def process_corpus(input_path: Path, output_path: Path, min_length: int = 3) -> 
     Returns:
         Statistics dictionary
     """
-    # TODO: Implement corpus processing
-    # - Read input file
-    # - Clean each line
-    # - Tokenize
-    # - Remove duplicates
-    # - Filter by length
-    # - Write to output
-    # - Return statistics
-    
     stats = {
         'total_lines': 0,
         'cleaned_lines': 0,
@@ -83,6 +86,47 @@ def process_corpus(input_path: Path, output_path: Path, min_length: int = 3) -> 
         'short_sentences_removed': 0,
         'total_tokens': 0
     }
+    
+    seen_sentences = set()
+    cleaned_sentences = []
+    
+    logger.info(f"Reading from {input_path}")
+    
+    with open(input_path, 'r', encoding='utf-8') as f:
+        for line in f:
+            stats['total_lines'] += 1
+            
+            # Clean text
+            cleaned = clean_text(line)
+            
+            if not cleaned:
+                continue
+            
+            # Tokenize
+            tokenized = tokenize_sentence(cleaned)
+            
+            # Check minimum length
+            tokens = tokenized.split()
+            if len(tokens) < min_length:
+                stats['short_sentences_removed'] += 1
+                continue
+            
+            # Check for duplicates
+            if tokenized in seen_sentences:
+                stats['duplicates_removed'] += 1
+                continue
+            
+            seen_sentences.add(tokenized)
+            cleaned_sentences.append(tokenized)
+            stats['total_tokens'] += len(tokens)
+    
+    stats['cleaned_lines'] = len(cleaned_sentences)
+    
+    # Write output
+    logger.info(f"Writing to {output_path}")
+    with open(output_path, 'w', encoding='utf-8') as f:
+        for sentence in cleaned_sentences:
+            f.write(sentence + '\n')
     
     return stats
 
