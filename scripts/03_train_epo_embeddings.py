@@ -40,8 +40,11 @@ def load_sentences(corpus_path: Path):
     Yields:
         List of tokens for each sentence
     """
-    # TODO: Implement sentence loading (same as Ido)
-    pass
+    with open(corpus_path, 'r', encoding='utf-8') as f:
+        for line in f:
+            tokens = line.strip().split()
+            if tokens:
+                yield tokens
 
 
 def train_embeddings(
@@ -68,8 +71,38 @@ def train_embeddings(
     Returns:
         Trained FastText model
     """
-    # TODO: Implement embedding training (same as Ido)
-    pass
+    logger.info("Loading sentences...")
+    sentences = list(load_sentences(corpus_path))
+    logger.info(f"Loaded {len(sentences)} sentences")
+    
+    logger.info("Initializing FastText model...")
+    model = FastText(
+        vector_size=vector_size,
+        window=window,
+        min_count=min_count,
+        workers=workers,
+        sg=1,  # Skip-gram
+        min_n=3,  # Character n-gram min
+        max_n=6,  # Character n-gram max
+        epochs=epochs,
+        callbacks=[EpochLogger()]
+    )
+    
+    logger.info("Building vocabulary...")
+    model.build_vocab(sentences)
+    logger.info(f"Vocabulary size: {len(model.wv)}")
+    
+    logger.info(f"Training for {epochs} epochs...")
+    model.train(
+        sentences,
+        total_examples=len(sentences),
+        epochs=epochs
+    )
+    
+    logger.info(f"Saving model to {output_path}")
+    model.save(str(output_path))
+    
+    return model
 
 
 def evaluate_embeddings(model: FastText, test_words: list):
@@ -80,8 +113,18 @@ def evaluate_embeddings(model: FastText, test_words: list):
         model: Trained FastText model
         test_words: List of words to test
     """
-    # TODO: Implement evaluation (same as Ido)
-    pass
+    logger.info(f"Vocabulary size: {len(model.wv)}")
+    logger.info(f"Vector dimension: {model.wv.vector_size}")
+    
+    logger.info("\nTesting word similarities:")
+    for word in test_words:
+        if word in model.wv:
+            similar = model.wv.most_similar(word, topn=5)
+            logger.info(f"\n'{word}' most similar words:")
+            for sim_word, score in similar:
+                logger.info(f"  {sim_word}: {score:.3f}")
+        else:
+            logger.warning(f"'{word}' not in vocabulary")
 
 
 def main():
