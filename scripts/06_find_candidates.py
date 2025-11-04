@@ -34,8 +34,13 @@ def load_seed_words(dict_path: Path) -> Set[str]:
     Returns:
         Set of Ido words already in dictionary
     """
-    # TODO: Implement loading
-    pass
+    seed_words = set()
+    with open(dict_path, 'r', encoding='utf-8') as f:
+        for line in f:
+            parts = line.strip().split()
+            if len(parts) >= 1:
+                seed_words.add(parts[0])
+    return seed_words
 
 
 def get_candidate_words(
@@ -56,12 +61,27 @@ def get_candidate_words(
     Returns:
         List of Ido words
     """
-    # TODO: Implement candidate selection
-    # - Get vocabulary from model
-    # - Exclude seed words
-    # - Filter by frequency
-    # - Limit to max_words
-    pass
+    candidates = []
+    
+    # Get words sorted by frequency
+    vocab_items = [(word, ido_model.wv.get_vecattr(word, 'count')) 
+                   for word in ido_model.wv.index_to_key]
+    vocab_items.sort(key=lambda x: x[1], reverse=True)
+    
+    for word, count in vocab_items:
+        if word in seed_words:
+            continue
+        if count < min_freq:
+            continue
+        if len(word) < 3:  # Skip very short words
+            continue
+        
+        candidates.append(word)
+        
+        if len(candidates) >= max_words:
+            break
+    
+    return candidates
 
 
 def find_nearest_neighbors(
@@ -84,13 +104,35 @@ def find_nearest_neighbors(
     Returns:
         List of dicts with 'translation' and 'similarity' keys
     """
-    # TODO: Implement nearest neighbor search
-    # - Get Ido embedding
-    # - Apply alignment: v_aligned = W @ v_ido
-    # - Find k nearest neighbors in Esperanto space
-    # - Compute cosine similarities
-    # - Return sorted list
-    pass
+    if word not in ido_model.wv:
+        return []
+    
+    # Get Ido embedding
+    v_ido = ido_model.wv[word].reshape(1, -1)
+    
+    # Apply alignment
+    v_aligned = (alignment_matrix @ v_ido.T).T
+    
+    # Get all Esperanto embeddings
+    epo_vectors = epo_model.wv.vectors
+    
+    # Compute cosine similarities
+    similarities = cosine_similarity(v_aligned, epo_vectors)[0]
+    
+    # Get top k indices
+    top_k_indices = np.argsort(similarities)[-k:][::-1]
+    
+    # Build result list
+    results = []
+    for idx in top_k_indices:
+        epo_word = epo_model.wv.index_to_key[idx]
+        similarity = float(similarities[idx])
+        results.append({
+            'translation': epo_word,
+            'similarity': similarity
+        })
+    
+    return results
 
 
 def process_all_candidates(
@@ -113,12 +155,18 @@ def process_all_candidates(
     Returns:
         Dictionary mapping Ido words to candidate translations
     """
-    # TODO: Implement batch processing
-    # - Iterate through candidate words
-    # - Find neighbors for each
-    # - Show progress
-    # - Return results dictionary
-    pass
+    from tqdm import tqdm
+    
+    results = {}
+    
+    for word in tqdm(candidate_words, desc="Finding candidates"):
+        neighbors = find_nearest_neighbors(
+            word, ido_model, epo_model, alignment_matrix, k
+        )
+        if neighbors:
+            results[word] = neighbors
+    
+    return results
 
 
 def main():
