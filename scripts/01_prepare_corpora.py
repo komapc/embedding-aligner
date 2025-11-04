@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 
 def clean_text(text: str) -> str:
     """
-    Clean and normalize text.
+    Clean and normalize text (minimal - corpus already pre-cleaned).
     
     Args:
         text: Raw text string
@@ -30,17 +30,8 @@ def clean_text(text: str) -> str:
     Returns:
         Cleaned text string
     """
-    # Remove URLs
-    text = re.sub(r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\(\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', '', text)
-    
-    # Remove email addresses
-    text = re.sub(r'\S+@\S+', '', text)
-    
     # Remove extra whitespace
-    text = re.sub(r'\s+', ' ', text)
-    
-    # Strip leading/trailing whitespace
-    text = text.strip()
+    text = re.sub(r'\s+', ' ', text).strip()
     
     return text
 
@@ -55,13 +46,7 @@ def tokenize_sentence(sentence: str) -> str:
     Returns:
         Tokenized sentence
     """
-    # Lowercase for consistency
-    sentence = sentence.lower()
-    
-    # Add space before punctuation for better tokenization
-    sentence = re.sub(r'([.,!?;:])', r' \1 ', sentence)
-    
-    # Remove extra spaces
+    # Corpus is already lowercase, just normalize spaces
     sentence = re.sub(r'\s+', ' ', sentence).strip()
     
     return sentence
