@@ -1,35 +1,36 @@
 # Python
-venv/
 __pycache__/
-*.pyc
-*.pyo
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
 *.egg-info/
-.pytest_cache/
 
-# Data files (too large for git)
-data/raw/*.xml.bz2
-data/raw/*.xml
-data/processed/*.txt
-models/*.vec
+# Models (large files)
+models/*.model
+models/*.model.*
+models/*.npy
 models/*.bin
 
-# External tools
-fastText/
-vecmap/
+# Data
+data/raw/*.txt
+data/processed/*.txt
 
 # Results
-results/*.txt
 results/*.json
-
-# Keep directory structure
-!data/raw/.gitkeep
-!data/processed/.gitkeep
-!data/dictionaries/.gitkeep
-!models/.gitkeep
-!results/.gitkeep
+results/*.txt
 
 # Logs
 *.log
 
-# Helper scripts (not part of project)
-push_to_github.sh
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
