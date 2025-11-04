@@ -11,6 +11,7 @@ Experiments:
 
 import argparse
 import logging
+import string
 from pathlib import Path
 from gensim.models import Word2Vec
 from gensim.models.callbacks import CallbackAny2Vec
@@ -28,9 +29,13 @@ class EpochLogger(CallbackAny2Vec):
 
 
 def load_sentences(corpus_path: Path):
+    """Load sentences with punctuation stripping."""
     with open(corpus_path, 'r', encoding='utf-8') as f:
         for line in f:
-            tokens = line.strip().split()
+            # Strip punctuation from each token
+            tokens = [token.strip(string.punctuation) for token in line.strip().split()]
+            # Filter out empty tokens
+            tokens = [t for t in tokens if t]
             if tokens:
                 yield tokens
 
