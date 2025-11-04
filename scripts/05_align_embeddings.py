@@ -34,11 +34,13 @@ def load_seed_dictionary(dict_path: Path) -> list:
     Returns:
         List of (ido_word, esperanto_word) tuples
     """
-    # TODO: Implement loading
-    # - Read file line by line
-    # - Parse "ido_word esperanto_word" format
-    # - Return list of tuples
-    pass
+    pairs = []
+    with open(dict_path, 'r', encoding='utf-8') as f:
+        for line in f:
+            parts = line.strip().split()
+            if len(parts) == 2:
+                pairs.append((parts[0], parts[1]))
+    return pairs
 
 
 def extract_embedding_matrices(
@@ -57,11 +59,18 @@ def extract_embedding_matrices(
     Returns:
         Tuple of (X_ido, X_epo) numpy arrays
     """
-    # TODO: Implement matrix extraction
-    # - Get embedding for each word
-    # - Stack into matrices
-    # - Ensure same order
-    pass
+    ido_vectors = []
+    epo_vectors = []
+    
+    for ido_word, epo_word in pairs:
+        if ido_word in ido_model.wv and epo_word in epo_model.wv:
+            ido_vectors.append(ido_model.wv[ido_word])
+            epo_vectors.append(epo_model.wv[epo_word])
+    
+    X_ido = np.array(ido_vectors)
+    X_epo = np.array(epo_vectors)
+    
+    return X_ido, X_epo
 
 
 def learn_procrustes_alignment(X_src: np.ndarray, X_tgt: np.ndarray) -> np.ndarray:
@@ -77,10 +86,10 @@ def learn_procrustes_alignment(X_src: np.ndarray, X_tgt: np.ndarray) -> np.ndarr
     Returns:
         Alignment matrix W (embedding_dim x embedding_dim)
     """
-    # TODO: Implement Procrustes alignment
-    # - Use scipy.linalg.orthogonal_procrustes
-    # - Return alignment matrix
-    pass
+    # Use scipy's orthogonal_procrustes
+    # It solves: min ||W @ X_src.T - X_tgt.T||
+    W, _ = orthogonal_procrustes(X_src, X_tgt)
+    return W
 
 
 def evaluate_alignment(
@@ -101,18 +110,40 @@ def evaluate_alignment(
     Returns:
         Evaluation metrics dictionary
     """
-    # TODO: Implement evaluation
-    # - Apply alignment: X_aligned = W @ X_src.T
-    # - Compute cosine similarities
-    # - Calculate precision@k metrics
-    # - Return statistics
+    from sklearn.metrics.pairwise import cosine_similarity
+    
+    # Apply alignment
+    X_aligned = (W @ X_src.T).T
+    
+    # Compute cosine similarities between aligned source and all targets
+    similarities = cosine_similarity(X_aligned, X_tgt)
+    
+    # For each source word, find rank of correct target
+    n_pairs = len(pairs)
+    correct_ranks = []
+    diagonal_sims = []
+    
+    for i in range(n_pairs):
+        # Similarity scores for this source word
+        sims = similarities[i]
+        diagonal_sims.append(sims[i])  # Similarity to correct target
+        
+        # Rank of correct target (0-indexed)
+        rank = np.sum(sims > sims[i])
+        correct_ranks.append(rank)
+    
+    # Calculate precision@k
+    p_at_1 = np.mean([r == 0 for r in correct_ranks])
+    p_at_5 = np.mean([r < 5 for r in correct_ranks])
+    p_at_10 = np.mean([r < 10 for r in correct_ranks])
     
     metrics = {
-        'mean_similarity': 0.0,
-        'median_similarity': 0.0,
-        'precision_at_1': 0.0,
-        'precision_at_5': 0.0,
-        'precision_at_10': 0.0
+        'mean_similarity': float(np.mean(diagonal_sims)),
+        'median_similarity': float(np.median(diagonal_sims)),
+        'precision_at_1': float(p_at_1),
+        'precision_at_5': float(p_at_5),
+        'precision_at_10': float(p_at_10),
+        'num_pairs': n_pairs
     }
     return metrics
 
