@@ -46,7 +46,10 @@ def tokenize_sentence(sentence: str) -> str:
     Returns:
         Tokenized sentence
     """
-    # Corpus is already lowercase, just normalize spaces
+    # Remove punctuation attached to words
+    sentence = re.sub(r'([.,!?;:])(?=\s|$)', ' ', sentence)
+    
+    # Normalize spaces
     sentence = re.sub(r'\s+', ' ', sentence).strip()
     
     return sentence
