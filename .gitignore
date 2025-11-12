@@ -34,3 +34,8 @@ results/*.txt
 # OS
 .DS_Store
 Thumbs.db
+data/raw/*.bz2
+data/raw/*.gz
+data/processed/*.txt
+models/*.model*
+*.log
