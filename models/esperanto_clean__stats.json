@@ -1,0 +1,7 @@
+{
+  "original_vocabulary": 725073,
+  "cleaned_vocabulary": 429980,
+  "removed": 295093,
+  "reduction_percent": 40.69838485228384,
+  "embedding_dimension": 300
+}

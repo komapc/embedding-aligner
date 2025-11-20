@@ -49,16 +49,32 @@ def load_bert_embeddings(npy_path: Path, vocab_path: Path):
     return embeddings, vocab, word_to_idx
 
 
-def load_word2vec_model(model_path: Path):
-    """Load Word2Vec model."""
-    logger.info(f"Loading Word2Vec model from {model_path}")
-    model = Word2Vec.load(str(model_path))
+def load_word2vec_model(model_path: Path, vocab_path: Path = None):
+    """Load Word2Vec model or .npy embeddings."""
+    if model_path.suffix == '.npy':
+        # Load from .npy file (cleaned embeddings)
+        logger.info(f"Loading embeddings from {model_path}")
+        embeddings = np.load(model_path)
+        
+        if vocab_path is None:
+            # Try to infer vocab path
+            vocab_path = model_path.parent / model_path.name.replace('.npy', '_vocab.txt')
+        
+        logger.info(f"Loading vocabulary from {vocab_path}")
+        with open(vocab_path, 'r', encoding='utf-8') as f:
+            vocab = [line.strip() for line in f]
+        
+        word_to_idx = {word: idx for idx, word in enumerate(vocab)}
+    else:
+        # Load from .model file (original Word2Vec)
+        logger.info(f"Loading Word2Vec model from {model_path}")
+        model = Word2Vec.load(str(model_path))
+        
+        vocab = list(model.wv.key_to_index.keys())
+        embeddings = model.wv.vectors
+        word_to_idx = model.wv.key_to_index
     
-    vocab = list(model.wv.key_to_index.keys())
-    embeddings = model.wv.vectors
-    word_to_idx = model.wv.key_to_index
-    
-    logger.info(f"Loaded {len(vocab):,} Word2Vec embeddings, shape: {embeddings.shape}")
+    logger.info(f"Loaded {len(vocab):,} embeddings, shape: {embeddings.shape}")
     return embeddings, vocab, word_to_idx
 
 
@@ -242,7 +258,10 @@ def main():
     parser = argparse.ArgumentParser(description="Align BERT with Esperanto")
     parser.add_argument('--ido-bert', type=Path, required=True)
     parser.add_argument('--ido-vocab', type=Path, required=True)
-    parser.add_argument('--epo-w2v', type=Path, required=True)
+    parser.add_argument('--epo-w2v', type=Path, required=True,
+                        help='Esperanto embeddings (.model or .npy)')
+    parser.add_argument('--epo-vocab', type=Path,
+                        help='Esperanto vocabulary (required if .npy)')
     parser.add_argument('--seed-dict', type=Path, required=True)
     parser.add_argument('--output-dir', type=Path, required=True)
     parser.add_argument('--threshold', type=float, default=0.50)
@@ -253,7 +272,7 @@ def main():
     
     # Load embeddings
     ido_emb, ido_vocab, ido_idx = load_bert_embeddings(args.ido_bert, args.ido_vocab)
-    epo_emb, epo_vocab, epo_idx = load_word2vec_model(args.epo_w2v)
+    epo_emb, epo_vocab, epo_idx = load_word2vec_model(args.epo_w2v, args.epo_vocab)
     
     # Load seed dictionary
     seed_pairs = load_seed_dictionary(args.seed_dict, set(ido_vocab), set(epo_vocab))

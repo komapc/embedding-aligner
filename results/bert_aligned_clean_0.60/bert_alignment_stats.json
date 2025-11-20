@@ -1,0 +1,8 @@
+{
+  "ido_vocab_size": 50641,
+  "epo_vocab_size": 429980,
+  "seed_pairs": 2610,
+  "threshold": 0.6,
+  "candidates_found": 2608,
+  "total_pairs": 4787
+}
