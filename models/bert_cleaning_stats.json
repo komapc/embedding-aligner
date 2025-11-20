@@ -1,0 +1,30 @@
+{
+  "cleaning": {
+    "original_vocab": 95435,
+    "clean_vocab": 50641,
+    "removed_punctuation": 40022,
+    "removed_numbers": 3607,
+    "removed_special": 715,
+    "duplicates_merged": 450
+  },
+  "projection": {
+    "original_dims": 768,
+    "projected_dims": 300,
+    "explained_variance": 0.9580641984939575,
+    "variance_per_component": [
+      0.11935650557279587,
+      0.06160266697406769,
+      0.05044577643275261,
+      0.02518150396645069,
+      0.020552268251776695,
+      0.019913727417588234,
+      0.0160286296159029,
+      0.015364514663815498,
+      0.013082185760140419,
+      0.011843670159578323
+    ]
+  },
+  "input_file": "models/ido_bert_embeddings.npy",
+  "output_file": "models/ido_bert_clean_300d.npy",
+  "vocab_file": "models/ido_bert_vocab_clean.txt"
+}

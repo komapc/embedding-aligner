@@ -39,3 +39,17 @@ data/raw/*.gz
 data/processed/*.txt
 models/*.model*
 *.log
+
+# BERT models and embeddings (too large for git)
+models/bert-ido-finetuned-*/
+models/*_embeddings*.npy
+models/*_aligned*.npy
+
+# Training logs
+logs/bert_*.log
+logs/*_training*.log
+
+# Temporary files
+*.pyc
+__pycache__/
+.ipynb_checkpoints/

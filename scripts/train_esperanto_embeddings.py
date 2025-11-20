@@ -194,7 +194,7 @@ def main():
         'combined-best': {
             'vector_size': 300,
             'window': 5,           # Focused context
-            'min_count': 15,       # Remove rare words
+            'min_count': 3,        # Low threshold for small Ido corpus
             'workers': 4,
             'sg': 1,               # Skip-gram
             'negative': 10,        # More negative samples
