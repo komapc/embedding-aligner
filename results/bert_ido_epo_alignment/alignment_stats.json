@@ -1,0 +1,15 @@
+{
+  "ido_vocab_size": 5000,
+  "epo_vocab_size": 5000,
+  "seed_pairs": 500,
+  "threshold": 0.5,
+  "top_k": 10,
+  "candidates_found": 5000,
+  "total_pairs": 50000,
+  "evaluation": {
+    "p@1": 1.0,
+    "p@5": 1.0,
+    "p@10": 1.0,
+    "total": 500
+  }
+}
