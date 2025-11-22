@@ -1,0 +1,10 @@
+{
+  "total_ido_words": 5000,
+  "total_translation_pairs": 15000,
+  "average_candidates_per_word": 3.0,
+  "average_similarity": 0.9841,
+  "cognates_count": 1022,
+  "cognates_percentage": 20.44,
+  "min_similarity": 0.9111,
+  "max_similarity": 1.0
+}
