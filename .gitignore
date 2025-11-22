@@ -4,52 +4,89 @@ __pycache__/
 *$py.class
 *.so
 .Python
-env/
 venv/
+env/
+ENV/
+.venv
+pip-log.txt
+pip-delete-this-directory.txt
+.tox/
+.coverage
+.coverage.*
+htmlcov/
 *.egg-info/
+dist/
+build/
 
-# Models (large files)
-models/*.model
-models/*.model.*
-models/*.npy
-models/*.bin
+# Jupyter Notebooks
+.ipynb_checkpoints
+*.ipynb
 
-# Data
-data/raw/*.txt
-data/processed/*.txt
-
-# Results
-results/*.json
-results/*.txt
-
-# Logs
-*.log
-
-# IDE
+# IDEs
 .vscode/
 .idea/
 *.swp
 *.swo
-
-# OS
+*~
 .DS_Store
-Thumbs.db
-data/raw/*.bz2
-data/raw/*.gz
+
+# Large Model Files (use Git LFS or exclude)
+models/bert-ido-finetuned-*/
+models/*.model
+models/*.model.*
+models/esperanto_*.npy
+models/ido_*.npy
+!models/esperanto_clean__vocab.txt
+!models/esperanto_clean__stats.json
+
+# Large Data Files
+data/raw/
 data/processed/*.txt
-models/*.model*
+data/processed/*.xml
+!data/processed/README.md
+
+# Embeddings (large files)
+embeddings/*.npy
+results/*/*.npy
+results/*/ido_aligned.npy
+results/*/epo_aligned.npy
+results/*/procrustes_W.npy
+results/*/esperanto_bert_embeddings.npz
+!embeddings/ido_bert_vocab5k.npz
+
+# Logs
+logs/*.log
 *.log
 
-# BERT models and embeddings (too large for git)
-models/bert-ido-finetuned-*/
-models/*_embeddings*.npy
-models/*_aligned*.npy
-
-# Training logs
-logs/bert_*.log
-logs/*_training*.log
-
 # Temporary files
-*.pyc
-__pycache__/
-.ipynb_checkpoints/
+*.tmp
+*.temp
+/tmp/
+.cache/
+
+# AWS / EC2
+*.pem
+*.key
+/tmp/gpu_instance_details.txt
+
+# Training checkpoints (large)
+checkpoint-*/
+lightning_logs/
+wandb/
+
+# Compressed files
+*.tar.gz
+*.zip
+*.7z
+
+# Large result files (keep JSON, exclude binary)
+results/**/checkpoint-*/
+results/**/*.bin
+results/**/*.pt
+results/**/*.pth
+
+# Keep these important files
+!results/bert_ido_epo_alignment/translation_candidates.json
+!results/bert_ido_epo_alignment/seed_dictionary.txt
+!results/bert_ido_epo_alignment/alignment_stats.json
+!results/README.md
