@@ -80,7 +80,7 @@ def pos_tags_match(ido_word: str, epo_word: str) -> bool:
     
     return ido_pos == epo_pos
 
-def create_dix_entry(ido_word: str, epo_word: str, similarity: float, add_pos: bool = True) -> Optional[ET.Element]:
+def create_dix_entry(ido_word: str, epo_word: str, similarity: float, add_pos: bool = True, skip_pos_mismatch: bool = True) -> Optional[ET.Element]:
     """
     Create an Apertium .dix dictionary entry.
     
@@ -90,8 +90,8 @@ def create_dix_entry(ido_word: str, epo_word: str, similarity: float, add_pos: b
     With POS:
     <e><p><l>ido_word<s n="pos"/></l><r>epo_word<s n="pos"/></r></p></e>
     """
-    # Skip if POS tags don't match (likely wrong pairing)
-    if add_pos and not pos_tags_match(ido_word, epo_word):
+    # Check POS match, but don't skip if skip_pos_mismatch is False
+    if add_pos and skip_pos_mismatch and not pos_tags_match(ido_word, epo_word):
         return None
     
     entry = ET.Element('e')
@@ -157,8 +157,7 @@ def create_dix_document(
     for tag, description in pos_tags.items():
         sdef = ET.SubElement(sdefs, 'sdef')
         sdef.set('n', tag)
-        comment = ET.Comment(f' {description} ')
-        sdef.append(comment)
+        # Don't add comments inside sdef - they must be empty elements
     
     # Add main section with entries
     section = ET.SubElement(root, 'section')
@@ -211,11 +210,14 @@ def filter_and_format(
         
         # Take top N candidates
         for candidate in high_quality[:max_candidates]:
-            epo_word = candidate['epo']
+            epo_word = candidate.get('translation', candidate.get('epo', ''))
             similarity = candidate['similarity']
             
-            # Create entry
-            entry = create_dix_entry(ido_word, epo_word, similarity, add_pos_tags)
+            if not epo_word:
+                continue
+            
+            # Create entry (allow entries without matching POS tags - don't skip them)
+            entry = create_dix_entry(ido_word, epo_word, similarity, add_pos_tags, skip_pos_mismatch=False)
             
             if entry is not None:
                 entries.append(entry)

@@ -4331,24 +4331,16 @@
   ],
   "kin": [
     {
-      "translation": "kvin",
-      "similarity": 0.9999999403953552
+      "translation": "kiu",
+      "similarity": 1.0
     },
     {
-      "translation": "sep",
-      "similarity": 0.8325101733207703
+      "translation": "kiun",
+      "similarity": 1.0
     },
     {
-      "translation": "tri",
-      "similarity": 0.8052293062210083
-    },
-    {
-      "translation": "ses",
-      "similarity": 0.764769971370697
-    },
-    {
-      "translation": "kvar",
-      "similarity": 0.7545803785324097
+      "translation": "kies",
+      "similarity": 0.95
     }
   ],
   "duimo": [
