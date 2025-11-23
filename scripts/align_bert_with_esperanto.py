@@ -201,7 +201,7 @@ def find_translation_candidates(
     ido_vocab: List[str],
     epo_emb: np.ndarray,
     epo_vocab: List[str],
-    threshold: float = 0.50,
+    threshold: float = 0.80,
     top_k: int = 5,
     batch_size: int = 100
 ):
@@ -264,7 +264,7 @@ def main():
                         help='Esperanto vocabulary (required if .npy)')
     parser.add_argument('--seed-dict', type=Path, required=True)
     parser.add_argument('--output-dir', type=Path, required=True)
-    parser.add_argument('--threshold', type=float, default=0.50)
+    parser.add_argument('--threshold', type=float, default=0.80)
     parser.add_argument('--iterations', type=int, default=10)
     parser.add_argument('--alpha', type=float, default=0.5)
     
