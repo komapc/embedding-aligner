@@ -226,7 +226,7 @@ def align_embeddings_procrustes(ido_emb, ido_words, ido_idx, epo_emb, epo_words,
 
 
 def find_translation_candidates(ido_emb, ido_words, epo_emb, epo_words, 
-                                threshold=0.50, top_k=10, batch_size=100):
+                                threshold=0.80, top_k=10, batch_size=100):
     """Find translation candidates using aligned embeddings."""
     logger.info(f"\n{'='*60}")
     logger.info(f"FINDING TRANSLATION CANDIDATES")
@@ -330,7 +330,7 @@ def main():
                         help='Maximum Esperanto words to process')
     parser.add_argument('--seed-pairs', type=int, default=500,
                         help='Maximum seed pairs for alignment')
-    parser.add_argument('--threshold', type=float, default=0.50,
+    parser.add_argument('--threshold', type=float, default=0.80,
                         help='Similarity threshold for candidates')
     parser.add_argument('--top-k', type=int, default=10,
                         help='Top K candidates per word')
