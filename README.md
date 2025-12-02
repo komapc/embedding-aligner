@@ -59,7 +59,11 @@ embedding-aligner/
 ├── scripts/
 │   ├── 13_finetune_bert.py              # Fine-tune BERT on Ido corpus
 │   ├── 14_explore_bert_embeddings.py    # Extract & explore embeddings
-│   └── 15_bert_crosslingual_alignment.py # Complete alignment pipeline
+│   ├── 15_bert_crosslingual_alignment.py # Complete alignment pipeline
+│   ├── regenerate_bidix.py              # Regenerate bidix from multiple JSON sources
+│   ├── regenerate_monodix.py            # Regenerate monodix from bidix
+│   ├── format_converters.py             # Convert JSON formats (BERT/Vortaro/Extractor)
+│   └── merge_translations.py            # Merge multiple sources
 ├── data/
 │   └── processed/
 │       └── ido_wikipedia_plus_wikisource.txt  # Ido training corpus (391K sentences)
@@ -200,10 +204,29 @@ git lfs track "models/bert-ido-finetuned-full/**"
 git lfs track "*.npy"
 ```
 
+## Dictionary Regeneration
+
+After generating translation candidates, regenerate Apertium dictionaries:
+
+```bash
+# Regenerate bidix from multiple JSON sources
+python3 scripts/regenerate_bidix.py \
+  --json results/bert_aligned_clean_0.60/bert_candidates.json \
+  --json results/vortaro_format/ido_epo_dictionary.json \
+  --json extractor/dist/bidix_big.json \
+  --output ../../apertium/apertium-ido-epo/apertium-ido-epo.ido-epo.dix
+
+# Regenerate monodix from updated bidix
+python3 scripts/regenerate_monodix.py \
+  --bidix ../../apertium/apertium-ido-epo/apertium-ido-epo.ido-epo.dix
+```
+
+See [DICTIONARY_REGENERATION.md](DICTIONARY_REGENERATION.md) for complete workflow.
+
 ## Next Steps
 
-1. **Format for Apertium:** Convert JSON to `.dix` XML format
-2. **Add POS tags:** Use morphological analyzers
+1. ✅ **Format for Apertium:** Convert JSON to `.dix` XML format (DONE)
+2. ✅ **Multiple sources:** Support BERT, Vortaro, Extractor formats (DONE)
 3. **Bidirectional testing:** Test Epo→Ido direction
 4. **Manual validation:** Review edge cases
 5. **Integration:** Add to apertium-ido-epo package
