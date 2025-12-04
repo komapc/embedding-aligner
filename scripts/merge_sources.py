@@ -10,6 +10,10 @@ Deduplication strategy:
 - Same lemma + different translations → Keep all variants
 - Same lemma + different POS → Keep as separate entries, flag conflict
 - Same lemma + different morphology → Prefer lexicon > wiktionary > bert
+
+Morphology inference:
+- If an entry has no morphology, infer from Ido word endings
+- Ido is highly regular: -o (noun), -a (adj), -ar (verb), -e (adv)
 """
 
 import json
@@ -22,6 +26,88 @@ from collections import defaultdict
 # Import validation
 sys.path.insert(0, str(Path(__file__).parent))
 from validate_schema import load_schema, validate_file
+
+
+def infer_ido_morphology(lemma: str) -> Dict[str, str]:
+    """
+    Infer POS and paradigm from Ido word endings.
+    
+    Ido is highly regular:
+    - Nouns end in -o (singular), -i (plural)
+    - Adjectives end in -a
+    - Adverbs end in -e
+    - Verbs end in -ar (infinitive), -as (present), -is (past), -os (future)
+    """
+    lemma_lower = lemma.lower().strip()
+    
+    # Skip very short words or non-alphabetic
+    if len(lemma_lower) < 2:
+        return {}
+    
+    # Skip if not mostly alphabetic
+    if not lemma_lower.replace('-', '').replace('.', '').isalpha():
+        return {}
+    
+    # Verb infinitives (most specific)
+    if lemma_lower.endswith('ar'):
+        return {'pos': 'vblex', 'paradigm': 'ar__vblex'}
+    
+    # Verb conjugated forms
+    if lemma_lower.endswith('as') and len(lemma_lower) > 3:
+        return {'pos': 'vblex', 'paradigm': 'ar__vblex'}
+    
+    if lemma_lower.endswith('is') and len(lemma_lower) > 3:
+        return {'pos': 'vblex', 'paradigm': 'ar__vblex'}
+    
+    if lemma_lower.endswith('os') and len(lemma_lower) > 3:
+        return {'pos': 'vblex', 'paradigm': 'ar__vblex'}
+    
+    if lemma_lower.endswith('us') and len(lemma_lower) > 3:
+        return {'pos': 'vblex', 'paradigm': 'ar__vblex'}
+    
+    if lemma_lower.endswith('ez') and len(lemma_lower) > 3:
+        return {'pos': 'vblex', 'paradigm': 'ar__vblex'}
+    
+    # Nouns (singular -o)
+    if lemma_lower.endswith('o'):
+        return {'pos': 'n', 'paradigm': 'o__n'}
+    
+    # Nouns (plural -i)
+    if lemma_lower.endswith('i') and len(lemma_lower) > 2:
+        return {'pos': 'n', 'paradigm': 'o__n'}
+    
+    # Adjectives
+    if lemma_lower.endswith('a'):
+        return {'pos': 'adj', 'paradigm': 'a__adj'}
+    
+    # Adverbs
+    if lemma_lower.endswith('e') and len(lemma_lower) > 2:
+        return {'pos': 'adv', 'paradigm': 'e__adv'}
+    
+    # Unknown
+    return {}
+
+
+def apply_morphology_inference(entries: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """
+    Apply morphology inference to all entries that don't have morphology.
+    """
+    inferred_count = 0
+    
+    for entry in entries:
+        # Skip if already has morphology
+        if entry.get('morphology', {}).get('paradigm'):
+            continue
+        
+        # Try to infer
+        inferred = infer_ido_morphology(entry.get('lemma', ''))
+        if inferred:
+            entry['pos'] = inferred.get('pos')
+            entry['morphology'] = {'paradigm': inferred.get('paradigm')}
+            inferred_count += 1
+    
+    print(f"  Morphology inferred for {inferred_count:,} entries")
+    return entries
 
 
 def load_source_file(file_path: Path, schema: Dict[str, Any]) -> List[Dict[str, Any]]:
@@ -225,6 +311,13 @@ def merge_all_sources(sources_dir: Path, schema: Dict[str, Any]) -> Dict[str, An
     
     # Deduplicate with multi-source provenance
     deduplicated_entries = deduplicate_entries(all_entries)
+    
+    print(f"\n{'='*70}")
+    print(f"INFERRING MORPHOLOGY")
+    print(f"{'='*70}")
+    
+    # Apply morphology inference to entries without paradigms
+    deduplicated_entries = apply_morphology_inference(deduplicated_entries)
     
     print(f"\n{'='*70}")
     print(f"MERGE COMPLETE")
