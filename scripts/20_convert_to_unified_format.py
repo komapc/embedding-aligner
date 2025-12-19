@@ -26,6 +26,23 @@ from datetime import datetime
 from typing import Dict, List, Any
 
 
+# Function words - don't infer morphology (let higher-priority sources handle)
+# These have specific POS that can't be inferred from endings
+FUNCTION_WORDS = {
+    # Articles/determiners
+    'la', 'lo', 'le',
+    # Prepositions (many end in -a which would wrongly be tagged as adjectives)
+    'da', 'di', 'de', 'a', 'ad', 'kun', 'sen', 'sur', 'sub', 'per', 'por',
+    'ye', 'til', 'tra', 'ultra', 'cis', 'inter', 'kontre', 'dum', 'pos', 'ante',
+    # Conjunctions (e and o end in vowels that would be misclassified)
+    'e', 'o', 'ma', 'sed', 'nam', 'se', 'ke', 'kad', 'quale', 'quankam', 'kande',
+    # Pronouns
+    'ol', 'on', 'il', 'el', 'lu', 'me', 'tu', 'ni', 'vi', 'li', 'vu',
+    # Other particles
+    'ne', 'yes', 'no', 'ja', 'nun', 'nur', 'tre', 'tro', 'plu', 'min', 'mem',
+}
+
+
 def infer_ido_morphology(lemma: str) -> Dict[str, str]:
     """
     Infer POS and paradigm from Ido word endings.
@@ -35,8 +52,14 @@ def infer_ido_morphology(lemma: str) -> Dict[str, str]:
     - Adjectives end in -a
     - Adverbs end in -e
     - Verbs end in -ar (infinitive), -as (present), -is (past), -os (future)
+    
+    Function words are excluded - they have specific POS that can't be inferred.
     """
     lemma_lower = lemma.lower().strip()
+    
+    # Skip function words - let higher-priority sources handle them
+    if lemma_lower in FUNCTION_WORDS:
+        return {}
     
     # Skip very short words or non-alphabetic
     if len(lemma_lower) < 2 or not lemma_lower.isalpha():
