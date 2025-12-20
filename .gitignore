@@ -90,3 +90,7 @@ results/**/*.pth
 !results/bert_ido_epo_alignment/seed_dictionary.txt
 !results/bert_ido_epo_alignment/alignment_stats.json
 !results/README.md
+# Large generated files
+embeddings/
+models/*.npy
+results/
