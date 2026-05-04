@@ -5,14 +5,17 @@ EXTRACTOR=$(ROOT)/extractor
 # Paths
 CORPUS=data/ido_corpus.txt
 MODEL_DIR=models/bert-ido-finetuned-full
-EMBEDDINGS=embeddings/ido_bert_vocab5k.npz
+RAW_VOCAB=data/ido_vocabulary.txt
+FILTERED_VOCAB=data/ido_vocabulary_filtered.txt
+EMBEDDINGS=embeddings/ido_bert_filtered.npz
 EPO_VOCAB=models/esperanto_clean__vocab.txt
 EPO_MODEL=models/esperanto_clean__300d.npy
+IO_PROCESSED=$(EXTRACTOR)/work/io_wiktionary_processed.json
 ALIGNMENT_OUT=results/bert_ido_epo_alignment
 CANDIDATES=$(ALIGNMENT_OUT)/translation_candidates.json
 BERT_SOURCE=$(EXTRACTOR)/data/sources/source_bert_embeddings.json
 
-.PHONY: all source_bert_embeddings align extract finetune-bert help
+.PHONY: all source_bert_embeddings align extract preprocess-vocab finetune-bert help
 
 all: source_bert_embeddings
 
@@ -33,11 +36,21 @@ $(CANDIDATES): $(EMBEDDINGS) $(EPO_VOCAB) $(EPO_MODEL)
 	  --epo-model $(EPO_MODEL) \
 	  --output-dir $(ALIGNMENT_OUT)
 
-$(EMBEDDINGS): $(MODEL_DIR)
+$(EMBEDDINGS): $(MODEL_DIR) $(FILTERED_VOCAB)
 	$(PY) scripts/14_extract_bert_embeddings.py \
 	  --model $(MODEL_DIR) \
-	  --vocab data/ido_vocab.txt \
+	  --vocab $(FILTERED_VOCAB) \
 	  --output $(EMBEDDINGS)
+
+# Preprocess raw Ido vocab: drop junk shapes (digits, parens, etc.) and
+# words already covered by io.wiktionary (BERT focuses on the long tail).
+$(FILTERED_VOCAB): $(RAW_VOCAB) $(IO_PROCESSED)
+	$(PY) scripts/preprocess_vocab.py \
+	  --input $(RAW_VOCAB) \
+	  --output $(FILTERED_VOCAB) \
+	  --io-processed $(IO_PROCESSED)
+
+preprocess-vocab: $(FILTERED_VOCAB)
 
 # Expensive GPU step — only run when retraining is needed (skip with existing model)
 finetune-bert:
