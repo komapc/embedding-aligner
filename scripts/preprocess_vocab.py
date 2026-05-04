@@ -62,6 +62,32 @@ def is_valid_ido_lemma(lm: str) -> bool:
     return True
 
 
+# Ido suffixes that turn a stem into a lemma. If the BERT vocab has an
+# unanalyzable bare-stem entry like "histori" and Wiktionary has "histori"+o
+# = "historio", the BERT entry's bidix output collides with the stem-keyed
+# Apertium bidix lookup and shadows the real translation. We drop these.
+_IDO_LEMMA_SUFFIXES = ('o', 'a', 'e', 'i', 'ar')
+
+
+def load_wiktionary_lemmas(processed_path: Path) -> set:
+    """Return set of ALL lowercase Ido lemmas in io_wiktionary (regardless
+    of whether they have an EO translation). Used to detect BERT-vocab
+    stem-shape fragments that would shadow real bidix entries."""
+    if not processed_path.exists():
+        return set()
+    data = json.load(open(processed_path))
+    entries = data.get('entries', data) if isinstance(data, dict) else data
+    return {(e.get('lemma') or '').lower().strip()
+            for e in entries or [] if e.get('lemma')}
+
+
+def shadows_wiktionary_lemma(surface: str, wikt_lemmas: set) -> bool:
+    """True if `surface + <Ido suffix>` is a Wiktionary lemma. Catches
+    stem-shaped fragments like 'histori' (shadows 'historio') or 'abel'
+    (shadows 'abelo')."""
+    return any((surface + s) in wikt_lemmas for s in _IDO_LEMMA_SUFFIXES)
+
+
 def load_wiktionary_covered(processed_path: Path) -> set:
     """Return set of lowercase Ido lemmas that io.wiktionary has at least
     one Esperanto translation for. These are the words BERT can SKIP."""
@@ -107,6 +133,7 @@ def main():
     logger.info("Loaded %d raw vocab entries from %s", len(raw), args.input)
 
     covered = set() if args.no_skip_covered else load_wiktionary_covered(args.io_processed)
+    wikt_lemmas = load_wiktionary_lemmas(args.io_processed)
 
     # Stage 1: shape filter
     after_shape = []
@@ -128,11 +155,22 @@ def main():
         unanalyzable = sum(1 for w, lm in lemma_map.items() if lm == w)
 
     # Dedupe by canonical lemma; preserve insertion order from `after_shape`.
+    # Also drop unanalyzable surface forms whose surface+suffix is a Wiktionary
+    # lemma — those are stem-shaped fragments (e.g. "histori") whose BERT
+    # output would shadow the real lemma ("historio") in the Apertium bidix
+    # because lookup is stem-keyed.
     seen: set[str] = set()
     after_lemma: list[str] = []
     collapsed = 0
+    drop_stem_shadow = 0
     for w in after_shape:
         lm = lemma_map[w]
+        # If lt-proc didn't analyze it AND it's a stem-shape of a Wiktionary
+        # lemma, drop. (When lemmatized, lm != w and the lemma itself is
+        # what we care about.)
+        if lm == w and shadows_wiktionary_lemma(w.lower(), wikt_lemmas):
+            drop_stem_shadow += 1
+            continue
         if lm in seen:
             collapsed += 1
             continue
@@ -153,6 +191,7 @@ def main():
     logger.info("  lemmatized (surface != lemma):  %5d", analyzed)
     logger.info("  unanalyzable (surface fallback):%5d", unanalyzable)
     logger.info("  collapsed (deduped by lemma):   %5d", collapsed)
+    logger.info("  dropped (stem-shadows lemma):   %5d", drop_stem_shadow)
     logger.info("  dropped (Wiktionary-covered):   %5d  (%.1f%%)", drop_wikt, drop_wikt * 100 / len(raw))
     logger.info("  kept (BERT will translate):     %5d  (%.1f%%)", len(kept), len(kept) * 100 / len(raw))
 
