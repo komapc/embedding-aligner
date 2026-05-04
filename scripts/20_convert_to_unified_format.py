@@ -43,6 +43,39 @@ FUNCTION_WORDS = {
 }
 
 
+def infer_eo_pos(word: str) -> str:
+    """
+    Infer POS from Esperanto word endings. EO is even more regular than Ido:
+    -i infinitive (vblex), -o noun, -a adjective, -e adverb, -as/-is/-os/-us/-u
+    conjugated verbs.
+
+    Returns POS tag ('vblex', 'n', 'adj', 'adv') or '' when uncertain
+    (proper nouns, loanwords, function words). Empty return means "skip the
+    POS-mismatch check for this word" — false positives are worse than misses.
+    """
+    w = word.lower().strip()
+    if len(w) < 3 or not w.isalpha():
+        return ''
+    # Verb conjugations (must precede -o/-a/-e checks for forms ending in vowels)
+    if w.endswith(('as', 'is', 'os', 'us')):
+        return 'vblex'
+    if w.endswith('i') and len(w) > 3:
+        return 'vblex'
+    if w.endswith('u') and len(w) > 3:
+        return 'vblex'
+    if w.endswith('o'):
+        return 'n'
+    if w.endswith('oj') or w.endswith('on') or w.endswith('ojn'):
+        return 'n'
+    if w.endswith('a'):
+        return 'adj'
+    if w.endswith('aj') or w.endswith('an') or w.endswith('ajn'):
+        return 'adj'
+    if w.endswith('e'):
+        return 'adv'
+    return ''
+
+
 def infer_ido_morphology(lemma: str) -> Dict[str, str]:
     """
     Infer POS and paradigm from Ido word endings.
@@ -137,49 +170,59 @@ def convert_bert_to_unified(
         'words_with_morphology': 0,
         'total_translations': 0,
         'skipped_low_similarity': 0,
-        'skipped_invalid': 0
+        'skipped_invalid': 0,
+        'skipped_pos_mismatch': 0,
     }
-    
+
     for ido_word, candidates in bert_data.items():
         # Skip invalid entries
         if not ido_word or not isinstance(candidates, list):
             stats['skipped_invalid'] += 1
             continue
-        
+
         # Skip special characters or very short words
         if len(ido_word) < 2 or ido_word.startswith('*') or ido_word == '-':
             stats['skipped_invalid'] += 1
             continue
-        
+
         # Filter candidates by similarity
         valid_candidates = [
-            c for c in candidates 
+            c for c in candidates
             if c.get('similarity', 0) >= min_similarity
         ][:max_candidates]
-        
+
         if not valid_candidates:
             stats['skipped_low_similarity'] += 1
             continue
-        
+
+        # POS-validation: drop candidates whose EO POS conflicts with the
+        # Ido POS. Skip the check when either side is uncertain.
+        ido_pos = infer_ido_morphology(ido_word).get('pos', '')
+
         # Build translations array
         translations = []
         for candidate in valid_candidates:
             epo_word = candidate.get('epo', '')
             similarity = candidate.get('similarity', 0)
-            
+
             if not epo_word or len(epo_word) < 2:
                 continue
-            
+
+            eo_pos = infer_eo_pos(epo_word)
+            if ido_pos and eo_pos and ido_pos != eo_pos:
+                stats['skipped_pos_mismatch'] += 1
+                continue
+
             translations.append({
                 'term': epo_word,
                 'lang': 'eo',
                 'confidence': round(similarity_to_confidence(similarity), 3),
                 'source': 'bert_embeddings'
             })
-        
+
         if not translations:
             continue
-        
+
         # Infer morphology
         morphology = infer_ido_morphology(ido_word)
         
@@ -231,6 +274,7 @@ def convert_bert_to_unified(
     print(f"Translations: {stats['total_translations']:,}")
     print(f"Skipped (low similarity): {stats['skipped_low_similarity']:,}")
     print(f"Skipped (invalid): {stats['skipped_invalid']:,}")
+    print(f"Skipped (POS mismatch): {stats['skipped_pos_mismatch']:,}")
     
     return stats
 
