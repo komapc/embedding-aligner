@@ -109,15 +109,16 @@ def save_embeddings(
     words = list(embeddings.keys())
     matrix = np.array([embeddings[w] for w in words])
     
-    # Save
-    np.save(output_path, matrix)
-    
-    # Save vocabulary
+    # Save as .npz archive (embeddings + words) for stage 15 to load.
+    # np.savez auto-appends .npz, so strip any pre-existing extension.
+    np.savez(output_path.with_suffix(''), embeddings=matrix, words=np.array(words))
+
+    # Also write a plain text vocab file for human inspection.
     vocab_file = vocab_path
     with open(vocab_file, 'w', encoding='utf-8') as f:
         for word in words:
             f.write(f"{word}\n")
-    
+
     logger.info(f"Saved {len(words):,} embeddings")
     logger.info(f"Matrix shape: {matrix.shape}")
     logger.info(f"Vocabulary saved to {vocab_file}")
