@@ -127,6 +127,9 @@ def main():
                     help='Disable skipping Wiktionary-covered lemmas (run BERT on everything)')
     ap.add_argument('--no-lemmatize', action='store_true',
                     help='Disable Apertium lemmatization (keep surface forms as-is)')
+    ap.add_argument('--no-drop-derivable', action='store_true',
+                    help='Keep morphologically-derivable forms (kreado, kreanto) as separate entries '
+                         'instead of collapsing onto the base verb (krear)')
     args = ap.parse_args()
 
     raw = [line.rstrip('\n') for line in open(args.input)]
@@ -150,7 +153,8 @@ def main():
         analyzed = unanalyzable = 0
     else:
         logger.info("Lemmatizing %d entries via lt-proc (%s)...", len(after_shape), args.ido_automorf)
-        lemma_map = lemmatize_words(after_shape, args.ido_automorf)
+        lemma_map = lemmatize_words(after_shape, args.ido_automorf,
+                                    drop_derivable=not args.no_drop_derivable)
         analyzed = sum(1 for w, lm in lemma_map.items() if lm != w)
         unanalyzable = sum(1 for w, lm in lemma_map.items() if lm == w)
 

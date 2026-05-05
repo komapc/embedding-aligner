@@ -81,6 +81,38 @@ def _pick_reading(readings: list[str]) -> str | None:
     return non_derived[0] if non_derived else readings[0]
 
 
+def _extract_base_from_derivation(readings: list[str]) -> str | None:
+    """If any reading is a derivation (contains a `der_*` tag), reconstruct
+    the underlying base lemma from that reading and return it.
+
+    For example, `kre<vblex><der_act><n><sg>` is the `der_act` derivation of
+    base `kre<vblex>` → reconstructs to `krear`. Returns None when no reading
+    has a derivation tag.
+
+    Used to collapse derivable surface forms (kreado, kreanto, kreajo, etc.)
+    onto their base verb, since Apertium's paradigm rules can re-derive the
+    Esperanto translation from the base. BERT shouldn't waste capacity on
+    these — they're mechanically reconstructible.
+    """
+    for reading in readings:
+        if not _DER_TAG_RE.search(reading):
+            continue
+        m = re.match(r'^([^<]+)(.*)$', reading)
+        if not m:
+            continue
+        stem, tagstr = m.group(1), m.group(2)
+        # Truncate tag string at the FIRST der_* — base reading is everything
+        # before the derivation.
+        before_der = re.split(r'<der_', tagstr, maxsplit=1)[0]
+        tags = _READING_TAG_RE.findall(before_der)
+        for tag in tags:
+            if tag in _POS_SUFFIX:
+                return stem + _POS_SUFFIX[tag]
+            if tag in _NO_SUFFIX_POS:
+                return stem
+    return None
+
+
 def _reading_to_lemma(reading: str) -> str | None:
     """Reconstruct the canonical Apertium-Ido lemma from a `stem<tag1><tag2>...`
     reading. Returns None if no usable POS tag is found."""
@@ -99,12 +131,22 @@ def _reading_to_lemma(reading: str) -> str | None:
     return None
 
 
-def lemmatize_words(words: Iterable[str], automorf_path: Path) -> dict[str, str]:
+def lemmatize_words(words: Iterable[str], automorf_path: Path,
+                    drop_derivable: bool = True) -> dict[str, str]:
     """Run lt-proc once on all words; return {surface -> canonical_lemma}.
 
     The mapping always has an entry for every input word: lemmatized when
     possible, surface unchanged otherwise. Caller is responsible for any
-    downstream deduplication."""
+    downstream deduplication.
+
+    `drop_derivable=True` (default) collapses morphologically-derivable
+    surface forms onto their base lemma. e.g. when `kreado` analyzes as
+    `kre<vblex><der_act><n>...` AND `kread<n>`, return `krear` instead of
+    `kreado` — Apertium's paradigm rules can re-derive `kreado` from `krear`,
+    so BERT doesn't need to translate it separately.
+    `drop_derivable=False` reverts to the prior behavior (prefer non-derived
+    reading when both exist).
+    """
     words = list(words)
     if not words:
         return {}
@@ -146,6 +188,13 @@ def lemmatize_words(words: Iterable[str], automorf_path: Path) -> dict[str, str]
             out[word] = word
             continue
         surface, readings = parsed
+        # PR C: when any reading is a derivation, route to the base lemma.
+        # Caller's dedup will collapse onto the base if it's also in vocab.
+        if drop_derivable:
+            base = _extract_base_from_derivation(readings)
+            if base is not None:
+                out[word] = base
+                continue
         reading = _pick_reading(readings)
         if reading is None:
             out[word] = word
