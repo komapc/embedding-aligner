@@ -82,17 +82,23 @@ def _pick_reading(readings: list[str]) -> str | None:
 
 
 def _extract_base_from_derivation(readings: list[str]) -> str | None:
-    """If any reading is a derivation (contains a `der_*` tag), reconstruct
-    the underlying base lemma from that reading and return it.
+    """If any reading is a NOUN derivation (contains a `der_*` tag with
+    outer POS `<n>`), reconstruct the underlying base lemma from that
+    reading and return it.
 
-    For example, `kre<vblex><der_act><n><sg>` is the `der_act` derivation of
-    base `kre<vblex>` → reconstructs to `krear`. Returns None when no reading
-    has a derivation tag.
+    For example, `kre<vblex><der_act><n><sg>` is the `der_act` action-noun
+    derivation of base `kre<vblex>` → reconstructs to `krear`. Returns None
+    when no reading has a noun-derivation tag.
 
-    Used to collapse derivable surface forms (kreado, kreanto, kreajo, etc.)
+    Used to collapse derivable noun surface forms (kreado, kreanto, kreajo)
     onto their base verb, since Apertium's paradigm rules can re-derive the
-    Esperanto translation from the base. BERT shouldn't waste capacity on
-    these — they're mechanically reconstructible.
+    Esperanto translation from the base.
+
+    Adjective derivations (participles like `skribita` → `skrib<vblex><der_ppas><adj>`)
+    are NOT collapsed: io.wiktionary lists those as standalone adjective lemmas
+    in the monodix, which beats the verb-paradigm path in apertium's bidix
+    selection. Until the extractor stops emitting empty-sense monodix entries
+    for these, BERT-provided translations are the safer path.
     """
     for reading in readings:
         if not _DER_TAG_RE.search(reading):
@@ -101,6 +107,14 @@ def _extract_base_from_derivation(readings: list[str]) -> str | None:
         if not m:
             continue
         stem, tagstr = m.group(1), m.group(2)
+        # Find the POS tag immediately AFTER the first der_*. If it's not 'n',
+        # skip this reading (participles, etc. — see docstring).
+        after_der_match = re.search(r'<der_[a-z_]+>(.*)$', tagstr)
+        if after_der_match:
+            outer_tags = _READING_TAG_RE.findall(after_der_match.group(1))
+            outer_pos = next((t for t in outer_tags if t in _POS_SUFFIX or t in _NO_SUFFIX_POS), None)
+            if outer_pos is not None and outer_pos != 'n':
+                continue
         # Truncate tag string at the FIRST der_* — base reading is everything
         # before the derivation.
         before_der = re.split(r'<der_', tagstr, maxsplit=1)[0]
