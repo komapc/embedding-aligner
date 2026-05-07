@@ -32,6 +32,7 @@ build/
 
 # Large Model Files (use Git LFS or exclude)
 models/bert-ido-finetuned-*/
+models/cross-encoder-io-eo/
 models/*.model
 models/*.model.*
 models/esperanto_*.npy
