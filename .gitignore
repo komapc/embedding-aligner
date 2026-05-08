@@ -18,9 +18,11 @@ htmlcov/
 dist/
 build/
 
-# Jupyter Notebooks
+# Jupyter Notebooks (ignore stray experiment notebooks; keep the
+# repo-managed ones under notebooks/)
 .ipynb_checkpoints
 *.ipynb
+!notebooks/*.ipynb
 
 # IDEs
 .vscode/
