@@ -7,7 +7,7 @@ to the unified source format used by the dictionary pipeline.
 
 This script:
 1. Reads BERT translation pairs with similarity scores
-2. Filters by minimum similarity threshold (default 0.85)
+2. Filters by minimum similarity threshold (default 0.99)
 3. Infers morphology from Ido word endings
 4. Outputs unified JSON format compatible with the merge pipeline
 
@@ -15,7 +15,7 @@ Usage:
     python3 20_convert_to_unified_format.py \
         --input results/bert_ido_epo_alignment/translation_candidates.json \
         --output sources/source_bert_embeddings.json \
-        --min-similarity 0.85
+        --min-similarity 0.99
 """
 
 import json
@@ -150,7 +150,7 @@ def similarity_to_confidence(similarity: float) -> float:
 def convert_bert_to_unified(
     input_path: Path,
     output_path: Path,
-    min_similarity: float = 0.85,
+    min_similarity: float = 0.99,
     max_candidates: int = 3
 ) -> Dict[str, Any]:
     """
@@ -298,8 +298,8 @@ def main():
     parser.add_argument(
         '--min-similarity',
         type=float,
-        default=0.85,
-        help='Minimum similarity score (default: 0.85)'
+        default=0.99,
+        help='Minimum similarity score (default: 0.99)'
     )
     parser.add_argument(
         '--max-candidates',
