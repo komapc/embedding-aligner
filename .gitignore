@@ -34,6 +34,7 @@ build/
 
 # Large Model Files (use Git LFS or exclude)
 models/bert-ido-finetuned-*/
+models/bert-ido-lemma-*/
 models/cross-encoder-io-eo/
 models/*.model
 models/*.model.*
@@ -88,12 +89,13 @@ results/**/*.bin
 results/**/*.pt
 results/**/*.pth
 
-# Keep these important files
-!results/bert_ido_epo_alignment/translation_candidates.json
-!results/bert_ido_epo_alignment/seed_dictionary.txt
-!results/bert_ido_epo_alignment/alignment_stats.json
-!results/README.md
 # Large generated files
 embeddings/
 models/*.npy
 results/
+
+# Keep these important files (must come after the results/ rule above)
+!results/bert_ido_epo_alignment/translation_candidates.json
+!results/bert_ido_epo_alignment/seed_dictionary.txt
+!results/bert_ido_epo_alignment/alignment_stats.json
+!results/README.md
