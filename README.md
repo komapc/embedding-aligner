@@ -29,8 +29,8 @@ make finetune-bert && make
 
 ### Fine-tuning (step 13)
 
-Only needed when retraining from scratch. Requires a GPU instance (AWS EC2
-`g4dn.xlarge` or similar). Takes ~11 hours. Two trained models exist:
+Only needed when retraining from scratch. Requires a GPU (Google Colab T4 or
+better). Takes ~11 hours. Two trained models exist:
 
 - `models/bert-ido-finetuned-full/` — fine-tuned on Ido Wikipedia + Wiktionary corpus
 - `models/bert-ido-lemma-30k/` — fine-tuned on lemmatized forms (30k vocab); newer,
