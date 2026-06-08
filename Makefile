@@ -3,7 +3,7 @@ ROOT=../..
 EXTRACTOR=$(ROOT)/extractor
 
 # Paths
-CORPUS=data/ido_corpus.txt
+CORPUS=data/processed/ido_finetune_corpus.txt
 MODEL_DIR=models/bert-ido-finetuned-full
 RAW_VOCAB=data/ido_vocabulary.txt
 FILTERED_VOCAB=data/ido_vocabulary_filtered.txt
