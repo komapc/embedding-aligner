@@ -1,5 +1,11 @@
 # Ido↔Esperanto Embedding Aligner
 
+> ⚠️ **Status (2026-06): the BERT approach below is a measured dead end for
+> NON-cognate pairs (~6% precision) — read [`experiments/FINDINGS.md`](experiments/FINDINGS.md) first.**
+> The existing cognate guard in the extractor is essentially optimal for what
+> these embeddings deliver. Measure any new idea in the local harness
+> (`experiments/eval_bli_*.py`, CPU, minutes) before spending GPU.
+
 Generates Ido→Esperanto translation candidates using BERT cross-lingual alignment.
 Output feeds into `extractor/data/sources/source_bert_embeddings.json` as a
 low-priority source (Wiktionary wins on conflict).

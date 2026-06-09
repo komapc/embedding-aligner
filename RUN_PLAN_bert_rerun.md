@@ -1,3 +1,10 @@
+> ⛔ **SUPERSEDED (2026-06-09) — this plan was executed and the approach is a measured DEAD END.**
+> The BERT bi-encoder/cross-encoder path cannot retain non-cognate Ido↔Esperanto
+> pairs (~6% precision); the existing cognate guard is essentially optimal. See
+> **`experiments/FINDINGS.md`** for the evidence and the local harness. Kept only
+> as a record of the pipeline. Do not re-run without a fundamentally different
+> embedding measured first in the harness.
+
 # BERT rerun — full pipeline run plan (2026-06-08)
 
 Goal: increase the Ido→Esperanto dictionary by rerunning the BERT path end to
