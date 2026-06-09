@@ -282,6 +282,10 @@ def assemble_surface_negatives(
       - obvious inflectional variants of any known gold (`rakonton` for
         gold `rakonto`)
     """
+    if neg_per_pos <= 0:
+        logger.info("Surface negatives disabled (neg_per_pos=0) — skipping the "
+                    "difflib pass entirely")
+        return []
     if not eo_vocab_path.exists():
         logger.warning("EO vocab missing: %s — skipping surface negatives", eo_vocab_path)
         return []
